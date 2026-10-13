@@ -1,0 +1,547 @@
+{
+  "name": "Démo 1 – Qualification de leads (v5)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "4072df7d-b748-44c1-9b95-ee2379dca399",
+      "name": "Note – À propos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "content": "## Démo 1 – Formulaire → qualification IA → CRM\n**v5 : pannes gérées, aucune perte de lead.**\n- Formulaire invalide : message au visiteur avec le motif, rien envoyé à HubSpot.\n- IA en panne ou JSON invalide : lead enregistré avec categorie_ia = a_qualifier.\n- HubSpot en panne : 3 essais, puis alerte Telegram (repli email) avec le lead complet.\n- Un watchdog (workflow séparé) vérifie toutes les 5 min que ce formulaire répond.\nIA locale (Ollama, qwen2.5:3b) : rien ne part chez un fournisseur d'IA. Données fictives uniquement.",
+        "height": 280,
+        "width": 600
+      }
+    },
+    {
+      "id": "dafd3761-a544-4e69-917b-cf44b3c8e2f1",
+      "name": "Formulaire de contact",
+      "webhookId": "848eb3da-50c8-445a-aff7-9dfef5e985c0",
+      "notesInFlow": true,
+      "notes": "Déclencheur : se lance à chaque envoi du formulaire.",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        304
+      ],
+      "parameters": {
+        "formTitle": "Parlez-nous de votre projet",
+        "formDescription": "Réponse sous 24 h ouvrées. Démo : n'entrez que des données fictives.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Prénom",
+              "placeholder": "Camille",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Nom",
+              "placeholder": "Martin",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email professionnel",
+              "placeholder": "camille@entreprise-fictive.fr",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Entreprise",
+              "placeholder": "Entreprise Fictive SAS",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Site web",
+              "placeholder": "https://entreprise-fictive.fr"
+            },
+            {
+              "fieldLabel": "Votre besoin",
+              "fieldType": "textarea",
+              "placeholder": "Ex. : chaque demande de devis est recopiée à la main dans notre CRM",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Budget",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Moins de 1 000 €"
+                  },
+                  {
+                    "option": "1 000 à 5 000 €"
+                  },
+                  {
+                    "option": "Plus de 5 000 €"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Délai",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Ce mois-ci"
+                  },
+                  {
+                    "option": "Ce trimestre"
+                  },
+                  {
+                    "option": "Plus tard"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Consentement",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "J'accepte que mes données soient utilisées pour traiter ma demande"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fdbcc872-22d4-4edb-a1ca-6f26cef41f9c",
+      "name": "Nettoyage des données",
+      "notesInFlow": true,
+      "notes": "Retire les espaces, met l'email en minuscules, majuscule au prénom.",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        288,
+        304
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5e65f45d-8198-4760-8952-51a18954229d",
+              "name": "prenom",
+              "value": "={{ ($json[\"Prénom\"] ?? '').trim().charAt(0).toUpperCase() + ($json[\"Prénom\"] ?? '').trim().slice(1).toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "31799cea-12c0-4376-a339-58667660df7f",
+              "name": "nom",
+              "value": "={{ ($json[\"Nom\"] ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "c3c32506-e270-4f8b-aa39-3a0d9d604e84",
+              "name": "email",
+              "value": "={{ ($json[\"Email professionnel\"] ?? '').trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "1c0946df-e6b8-4f75-bcd8-97a9da2f5494",
+              "name": "entreprise",
+              "value": "={{ ($json[\"Entreprise\"] ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "4e0f6ab3-613e-4cf5-be5d-c9ab91c7c2bc",
+              "name": "site_web",
+              "value": "={{ ($json[\"Site web\"] ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "fabfb5ed-3cfe-4e35-b7c3-29dc3954bb6c",
+              "name": "besoin",
+              "value": "={{ ($json[\"Votre besoin\"] ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "c7914d44-0994-4277-af31-2d80447f9017",
+              "name": "budget",
+              "value": "={{ $json[\"Budget\"] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b428f96f-6a7c-464c-9fb4-9719481b4f68",
+              "name": "delai",
+              "value": "={{ $json[\"Délai\"] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "95b43201-9b8e-4085-b0fa-12db5069f4c8",
+              "name": "consentement",
+              "value": "={{ ($json[\"Consentement\"] ?? '') !== '' }}",
+              "type": "boolean"
+            },
+            {
+              "id": "f5a4be9f-8dfd-4143-9e8d-04e7e3fae716",
+              "name": "recu_le",
+              "value": "={{ $json.submittedAt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "9d72cd08-422b-49ec-8d05-65b2482a8b20",
+      "name": "Données valides ?",
+      "notesInFlow": true,
+      "notes": "Email bien formé, prénom et besoin remplis, consentement donné.",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        304
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "244990b7-9759-42fe-a657-386041763dc2",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            },
+            {
+              "id": "89dff042-57db-4aed-b14a-b10bb3599e00",
+              "leftValue": "={{ $json.prenom }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "24fbda05-bbdb-44f1-ab5e-9dd2450ac394",
+              "leftValue": "={{ $json.besoin }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "100b1c59-bdd2-4884-9e84-3bedda09ccf7",
+              "leftValue": "={{ $json.consentement }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a2e1ae61-13e5-4bea-bc4e-dde121b0b4e1",
+      "name": "Écran – Demande reçue",
+      "webhookId": "228d6e95-166f-4dcd-9825-399c6164a3e0",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1728,
+        208
+      ],
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Demande reçue",
+        "completionMessage": "=Merci {{ $('Nettoyage des données').first().json.prenom }}, votre demande est bien arrivée. Nous vous répondons sous 24 h ouvrées.",
+        "options": {}
+      }
+    },
+    {
+      "id": "e0f75303-bb37-4060-88a5-22a57080d379",
+      "name": "Écran – Demande incomplète",
+      "webhookId": "a531fc46-348e-45e1-83c3-5b4cf43c31d8",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1008,
+        448
+      ],
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Demande incomplète",
+        "completionMessage": "=Votre demande n'a pas été enregistrée ({{ $json.motif }}). Corrigez puis réessayez.",
+        "options": {}
+      }
+    },
+    {
+      "id": "6e8b8ff0-d25d-445a-941d-50e657c8bbbb",
+      "name": "HubSpot – Créer ou mettre à jour",
+      "notesInFlow": true,
+      "notes": "Upsert par email. Remplit score_ia, categorie_ia, resume_ia. 3 essais ; si HubSpot échoue toujours, le lead part dans l'alerte (sortie erreur). [Credential à créer : HubSpot – n8n-demo1]",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput",
+      "position": [
+        1488,
+        208
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-eu1.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: [ { idProperty: 'email', id: $json.email, properties: { email: $json.email, firstname: $json.prenom, lastname: $json.nom, company: $json.entreprise, website: $json.site_web, score_ia: $json.score_points, categorie_ia: $json.categorie, resume_ia: $json.resume, message: 'Besoin : ' + $json.besoin + '\\nBudget : ' + $json.budget + '\\nDélai : ' + $json.delai + '\\nScore détaillé : ' + $json.score_points + '/4 (budget + délai)' } } ] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "fa027552-0cff-4d4d-9cca-d496fdf86ec9",
+      "name": "Score (règle budget + délai)",
+      "notesInFlow": true,
+      "notes": "Budget : >5 k€ = 2, 1-5 k€ = 1. Délai : ce mois = 2, trimestre = 1. Total ≥3 chaud, 2 tiède, sinon froid.",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        768,
+        208
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "80149a03-ac61-4aab-a94f-176f520579bf",
+              "name": "score_points",
+              "value": "={{ ($json.budget.includes('Plus') ? 2 : ($json.budget.startsWith('1') ? 1 : 0)) + ($json.delai.includes('mois') ? 2 : ($json.delai.includes('trimestre') ? 1 : 0)) }}",
+              "type": "number"
+            },
+            {
+              "id": "f580e6a6-9ca8-49e8-8eb0-8768edc7a862",
+              "name": "score",
+              "value": "={{ (($json.budget.includes('Plus') ? 2 : ($json.budget.startsWith('1') ? 1 : 0)) + ($json.delai.includes('mois') ? 2 : ($json.delai.includes('trimestre') ? 1 : 0))) >= 3 ? 'chaud' : ((($json.budget.includes('Plus') ? 2 : ($json.budget.startsWith('1') ? 1 : 0)) + ($json.delai.includes('mois') ? 2 : ($json.delai.includes('trimestre') ? 1 : 0))) == 2 ? 'tiede' : 'froid') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "5325fa6d-15f6-4ade-b041-d231da6a6656",
+      "name": "IA locale – Catégorie et résumé",
+      "notesInFlow": true,
+      "notes": "Ollama sur la machine (qwen2.5:3b). Réponse forcée en JSON. En cas d'échec, le flux continue.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1008,
+        208
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'qwen2.5:3b', stream: false, keep_alive: '30m', options: { temperature: 0, num_predict: 150 }, format: { type: 'object', properties: { categorie: { type: 'string', enum: ['automatisation', 'agent IA', 'reporting', 'autre'] }, resume: { type: 'string' } }, required: ['categorie', 'resume'] }, messages: [ { role: 'system', content: \"Tu analyses la demande d'un prospect pour un studio d'automatisation. Réponds uniquement en JSON. categorie : 'automatisation' (tâches répétitives, saisie, synchronisation d'outils, relances), 'agent IA' (chatbot, assistant, lecture ou tri de documents par IA), 'reporting' (tableaux de bord, rapports, indicateurs), 'autre' sinon. resume : une phrase en français, 20 mots maximum, qui reformule le besoin. Règles du résumé : reprends exactement les chiffres, quantités et fréquences écrits par le prospect (par exemple « 50 devis par semaine » reste « 50 devis par semaine ») ; n'ajoute aucune information absente de la demande.\" }, { role: 'user', content: 'Entreprise : ' + $json.entreprise + '\\nBesoin : ' + $json.besoin + '\\nBudget : ' + $json.budget + '\\nDélai : ' + $json.delai } ] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "4341ce75-8b25-4517-97f5-2682740e391c",
+      "name": "Fusion lead + IA",
+      "notesInFlow": true,
+      "notes": "Contrôle la réponse de l'IA ; repli « à qualifier » si elle est invalide.",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        208
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Fusionne le lead (score + température de la règle) et la réponse de l'IA.\n// categorie_ia = température de la règle (chaud/tiede/froid) ; repli IA en panne ou invalide = a_qualifier.\n// resume_ia = \"[thème] résumé\" ; repli = \"[autre] Analyse IA indisponible : lire le besoin.\"\nconst lead = $('Score (règle budget + délai)').item.json;\nconst themes = ['automatisation', 'agent IA', 'reporting', 'autre'];\n// Nombres d'un texte : « 1 200 » → 1200, « 1,5 » → 1.5\nconst nombres = (t) => (String(t).replace(/(\\d)[\\s  .](?=\\d{3}(?!\\d))/g, '$1').replace(/(\\d),(\\d)/g, '$1.$2').match(/\\d+(?:\\.\\d+)?/g) ?? []).map(Number);\n// Périodes d'un texte ramenées à un radical : « par semaine » ≠ « semestriels »\nconst periodes = (t) => (String(t).toLowerCase().match(/semaine|hebdomadaire|jour|quotidien|mois|mensuel|trimestr|semestr|annuel|\\ban(?:s|nées?)?\\b|heure/g) ?? []).map((p) => ({ hebdomadaire: 'semaine', quotidien: 'jour', mensuel: 'mois', annuel: 'an' }[p] ?? p.replace(/^an.*/, 'an')));\nlet theme = 'autre';\nlet resume = 'Analyse IA indisponible : lire le besoin.';\nlet ia_ok = false;\nlet garde_fou = false;\ntry {\n  const r = JSON.parse($json.message?.content ?? '');\n  if (themes.includes(r.categorie) && typeof r.resume === 'string' && r.resume.trim()) {\n    theme = r.categorie;\n    resume = r.resume.trim().slice(0, 200);\n    ia_ok = true;\n  }\n} catch (e) {}\n// Garde-fou : tout nombre du résumé doit figurer dans l'entrée, sinon résumé fixe.\nif (ia_ok) {\n  const entree = nombres(`${lead.besoin} ${lead.budget} ${lead.delai}`);\n  const periodesEntree = periodes(`${lead.besoin} ${lead.delai}`);\n  if (nombres(resume).some((n) => !entree.includes(n)) || periodes(resume).some((p) => !periodesEntree.includes(p))) {\n    garde_fou = true;\n    theme = 'autre';\n    resume = `Demande de ${lead.entreprise}, budget ${lead.budget}, délai ${lead.delai}`;\n  }\n}\nreturn { json: { ...lead, theme, resume: `[${theme}] ${resume}`, categorie: ia_ok ? lead.score : 'a_qualifier', ia_ok, garde_fou } };\n"
+      }
+    },
+    {
+      "id": "b1",
+      "name": "Lead non enregistré",
+      "notesInFlow": true,
+      "notes": "HubSpot en erreur : le lead complet est joint à l'erreur, donc à l'alerte Telegram/email. Aucune perte.",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        400
+      ],
+      "parameters": {
+        "errorMessage": "={{ 'HubSpot en erreur. Lead à saisir à la main : ' + JSON.stringify({ email: $('Fusion lead + IA').item.json.email, prenom: $('Fusion lead + IA').item.json.prenom, nom: $('Fusion lead + IA').item.json.nom, entreprise: $('Fusion lead + IA').item.json.entreprise, besoin: $('Fusion lead + IA').item.json.besoin, budget: $('Fusion lead + IA').item.json.budget, delai: $('Fusion lead + IA').item.json.delai, score_ia: $('Fusion lead + IA').item.json.score_points, categorie_ia: $('Fusion lead + IA').item.json.categorie, resume_ia: $('Fusion lead + IA').item.json.resume }) }}"
+      }
+    },
+    {
+      "id": "b2",
+      "name": "Motif du rejet",
+      "notesInFlow": true,
+      "notes": "Formulaire invalide : on note pourquoi, on le dit au visiteur. Rien n'est envoyé à HubSpot.",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        768,
+        448
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "motif",
+              "type": "string",
+              "value": "={{ [!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test($json.email) ? 'adresse email invalide' : null, !$json.prenom ? 'prénom manquant' : null, !$json.besoin ? 'besoin manquant' : null, !$json.consentement ? 'consentement manquant' : null].filter(Boolean).join(', ') }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Formulaire de contact": {
+      "main": [
+        [
+          {
+            "node": "Nettoyage des données",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nettoyage des données": {
+      "main": [
+        [
+          {
+            "node": "Données valides ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Données valides ?": {
+      "main": [
+        [
+          {
+            "node": "Score (règle budget + délai)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Motif du rejet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score (règle budget + délai)": {
+      "main": [
+        [
+          {
+            "node": "IA locale – Catégorie et résumé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA locale – Catégorie et résumé": {
+      "main": [
+        [
+          {
+            "node": "Fusion lead + IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fusion lead + IA": {
+      "main": [
+        [
+          {
+            "node": "HubSpot – Créer ou mettre à jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot – Créer ou mettre à jour": {
+      "main": [
+        [
+          {
+            "node": "Écran – Demande reçue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lead non enregistré",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Motif du rejet": {
+      "main": [
+        [
+          {
+            "node": "Écran – Demande incomplète",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": [],
+  "sourceWorkflowId": null
+}

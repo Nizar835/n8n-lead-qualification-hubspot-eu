@@ -1,0 +1,144 @@
+{
+  "name": "Démo 1 – Alerte d'échec (workflow d'erreur)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "a1",
+      "name": "Erreur d'un workflow",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a2",
+      "name": "Message d'alerte",
+      "notesInFlow": true,
+      "notes": "Texte court : quel workflow, quel nœud, quelle erreur, lien d'exécution. Si un lead est joint à l'erreur, il est dans le message : rien n'est perdu.",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m1",
+              "name": "texte",
+              "type": "string",
+              "value": "={{ '⚠️ Démo 1 en échec\\nWorkflow : ' + $json.workflow.name + '\\nNœud : ' + ($json.execution.lastNodeExecuted ?? '?') + '\\nErreur : ' + ($json.execution.error?.message ?? '?') + '\\nExécution : ' + $json.execution.url }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a3",
+      "name": "Journal alerte",
+      "notesInFlow": true,
+      "notes": "Trace de l'alerte dans l'historique n8n, même si Telegram et l'email ne sont pas encore configurés.",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        480,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a4",
+      "name": "Telegram – alerte",
+      "notesInFlow": true,
+      "notes": "Credential Telegram et identifiant du chat : à renseigner par vous (valeurs A_RENSEIGNER). [Credential à créer : Telegram – alerte démo (À RENSEIGNER)]",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        480,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "A_RENSEIGNER",
+        "text": "={{ $json.texte }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "a5",
+      "name": "Email de repli",
+      "notesInFlow": true,
+      "notes": "Envoyé seulement si Telegram échoue. SMTP et adresses : à renseigner par vous. [Credential à créer : SMTP – alerte démo (À RENSEIGNER)]",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "alerte@A_RENSEIGNER.example",
+        "toEmail": "vous@A_RENSEIGNER.example",
+        "subject": "Démo 1 en échec",
+        "emailFormat": "text",
+        "text": "={{ $('Message d\\'alerte').item.json.texte }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Erreur d'un workflow": {
+      "main": [
+        [
+          {
+            "node": "Message d'alerte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message d'alerte": {
+      "main": [
+        [
+          {
+            "node": "Journal alerte",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram – alerte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram – alerte": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Email de repli",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodeGroups": [],
+  "sourceWorkflowId": null
+}

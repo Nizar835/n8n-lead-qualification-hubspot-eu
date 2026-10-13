@@ -1,0 +1,91 @@
+{
+  "name": "Démo 1 – Watchdog",
+  "active": false,
+  "nodes": [
+    {
+      "id": "w1",
+      "name": "Toutes les 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "w2",
+      "name": "Ping du formulaire",
+      "notesInFlow": true,
+      "notes": "GET sur le formulaire de la démo. 200 = vivant. 404 (workflow désactivé), refus de connexion ou délai dépassé = panne.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:5678/form/848eb3da-50c8-445a-aff7-9dfef5e985c0",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "w3",
+      "name": "Démo en panne",
+      "notesInFlow": true,
+      "notes": "Déclenche le workflow d'alerte (Telegram, repli email).",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "errorMessage": "={{ 'La démo 1 ne répond pas (HTTP ' + ($json.error?.status ?? $json.error?.code ?? '?') + '). Formulaire hors ligne : vérifier que le workflow v5 est actif.' }}"
+      }
+    }
+  ],
+  "connections": {
+    "Toutes les 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Ping du formulaire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ping du formulaire": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Démo en panne",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodeGroups": [],
+  "sourceWorkflowId": null
+}
