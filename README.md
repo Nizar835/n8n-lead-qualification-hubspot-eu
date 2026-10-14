@@ -93,4 +93,4 @@ EU hosting, the AI step runs locally (HubSpot and, if you use it, Telegram are t
 **Preuves** : TESTS.md. **Réserve** : le petit modèle local ne garde pas toujours « 50 devis par semaine » mot pour mot ; aucune valeur fausse n'atteint le CRM.
 **Données fictives uniquement.**
 
-Asynk Studio, workflows testés, supervisés, hébergés en UE. studioasynk@gmail.com
+Asynk Studio, workflows testés, documentés, hébergés en UE ; alerte d'échec et watchdog fournis. studioasynk@gmail.com
