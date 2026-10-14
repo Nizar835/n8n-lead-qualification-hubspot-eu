@@ -70,6 +70,15 @@ The upsert key is the email. Submitting the same email twice updates the same co
 5. In *Settings → Error workflow* of the v5 and the watchdog, choose "Démo 1 – Alerte d'échec". Activate the alert workflow first, then v5, then the watchdog. In the watchdog, replace the form URL by your own production form URL.
 6. Submit a fictional lead (the `/form/<id>` URL of the form trigger, or `python scripts/send_lead.py <form_id> a@example.com "need" "Plus de 5 000 €" "Ce mois-ci"`) and check the contact in HubSpot. Break the HubSpot URL once to see the alert.
 
+## For agencies / Pour les agences
+White-label: this workflow can be delivered under your agency's name for your clients.
+- Deliverables: the workflow JSON (no credentials), a test report (like TESTS.md), and a handover document (template: `docs/HANDOVER_TEMPLATE.md`).
+- Everything in writing, asynchronous: no calls, no meetings. Scope, quote and questions by email.
+- EU hosting, local AI step, GDPR processor clause (art. 28) in every quote, the agent announces itself as an AI.
+- Contact: studioasynk@gmail.com
+
+Marque blanche : ce workflow peut être livré sous le nom de votre agence pour vos clients. Livrables : workflow JSON sans credentials, rapport de tests, document de passation (`docs/HANDOVER_TEMPLATE.md`). Tout se fait par écrit, sans appel. Contact : studioasynk@gmail.com
+
 ## Compliance
 EU hosting, the AI step runs locally (HubSpot and, if you use it, Telegram are third parties), consent collected in the form, GDPR processor clause (art. 28) in client quotes, no secret in this repository, fictional data only.
 
